@@ -12,29 +12,35 @@ class Weather {
   private temperature: number;
   private description: string;
   private icon: string;
-  constructor(temp: number, desc: string, icon: string) {
-    this.temperature = temp;
-    this.description = desc;
+  constructor(temperature: number, description: string, icon: string) {
+    this.temperature = temperature;
+    this.description = description;
     this.icon = icon;
+  }
+  getTemperature() {
+    return this.temperature;
+  }
+  getDescription() {
+    return this.description;
+  }
+  getIcon() {
+    return this.icon;
   }
 }
 
 // TODO: Complete the WeatherService class
 class WeatherService {
   // TODO: Define the baseURL, API key, and city name properties
-  private baseURL: string;
-  private apiKey: string;
-  private cityName: string;
+  baseURL: string;
+  apiKey: string;
+  cityName: string;
   constructor() {
-    this.baseURL = 'https://api.weatherbit.io/v2.0';
-    if (!process.env.WEATHER_API_KEY) {
-      throw new Error('WEATHER_API_KEY is not defined in the environment variables');
-    }
-    this.apiKey = process.env.WEATHER_API_KEY;
+    this.baseURL = 'api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API key}';
+    this.apiKey = "1a51c6c8bbd3bcf5265f07702d5b514c";
     this.cityName = '';
   }
   // TODO: Create fetchLocationData method
-  private async fetchLocationData(query: string) {
+  async fetchLocationData(query: string) {
     try {
       const response = await fetch(query);
       const data = await response.json();
@@ -44,54 +50,51 @@ class WeatherService {
     }
   }
   // TODO: Create destructureLocationData method
-  private destructureLocationData(locationData: Coordinates): Coordinates {
+  destructureLocationData(locationData: Coordinates): Coordinates {
     const { lat, lon } = locationData;
     return { lat, lon };
   }
   // TODO: Create buildGeocodeQuery method
-  private buildGeocodeQuery(): string {
+  buildGeocodeQuery(): string {
     const { baseURL, apiKey, cityName
     } = this;
     return `${baseURL}/geocode/v1/json?q=${cityName}&key=${apiKey}`;
   }
   // TODO: Create buildWeatherQuery method
-  private buildWeatherQuery(coordinates: Coordinates): string {
+  buildWeatherQuery(coordinates: Coordinates): string {
     const { baseURL, apiKey } = this;
     const { lat, lon } = coordinates;
-    return `${baseURL}/current?lat=${lat}&lon=${lon}&key=${apiKey}`;
+    return `${baseURL}?lat=${lat}&lon=${lon}&appid=${apiKey}`;
   }
   // TODO: Create fetchAndDestructureLocationData method
-  private async fetchAndDestructureLocationData() {
+  async fetchAndDestructureLocationData() {
     const query = this.buildGeocodeQuery();
     const locationData = await this.fetchLocationData(query);
     return this.destructureLocationData(locationData);
   }
   // TODO: Create fetchWeatherData method
-  private async fetchWeatherData(coordinates: Coordinates) {
+  async fetchWeatherData(coordinates: Coordinates) {
     const query = this.buildWeatherQuery(coordinates);
     const response = await fetch(query);
     const data = await response.json();
     return data;
   }
   // TODO: Build parseCurrentWeather method
-  private parseCurrentWeather(response: any) {
+  parseCurrentWeather(response: any) {
     const { data } = response;
     const currentWeather = new Weather(data[0].temp, data[0].weather.description, data[0].weather.icon);
     return currentWeather;
   }
   // TODO: Complete buildForecastArray method
-  private buildForecastArray(currentWeather: Weather, weatherData: any[]) {
-    const forecastArray = weatherData.map((day: any) => {
-      const { temp, weather, datetime } = day;
-      return {
-        date: datetime,
-        temperature: temp,
-        description: weather.description,
-        icon: weather.icon,
-        isToday: false,
-      };
+  buildForecastArray(response: any) {
+    if (!response || !response.data || !Array.isArray(response.data)) {
+      console.error('Invalid response format');
+      return [];
+    }
+    const { data } = response;
+    const forecastArray = data.slice(1).map((day: any) => {
+      return new Weather(day.temp ?? 0, day.weather?.description ?? 'No description', day.weather?.icon ?? 'No icon');
     });
-    forecastArray[0].isToday = true;
     return forecastArray;
   }
   // TODO: Complete getWeatherForCity method
@@ -100,7 +103,7 @@ class WeatherService {
     const coordinates = await this.fetchAndDestructureLocationData();
     const weatherData = await this.fetchWeatherData(coordinates);
     const currentWeather = this.parseCurrentWeather(weatherData);
-    const forecastArray = this.buildForecastArray(currentWeather, weatherData);
+    const forecastArray = this.buildForecastArray(weatherData);
     return { currentWeather, forecastArray };
   }
 }
