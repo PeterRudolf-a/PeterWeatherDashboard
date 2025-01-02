@@ -9,22 +9,50 @@ interface Coordinates {
 
 // TODO: Define a class for the Weather object
 class Weather {
-  private temperature: number;
-  private description: string;
+  private city: string;
+  private date: string;
   private icon: string;
-  constructor(temperature: number, description: string, icon: string) {
-    this.temperature = temperature;
-    this.description = description;
+  private description: string;
+  private temperature: number;
+  private windSpeed: number;
+  private humidity: number;
+  
+  constructor(city: string, date: string, icon: string, description: string, temperature: number, windSpeed: number, humidity: number) {
+    this.city = city;
+    this.date = date;
     this.icon = icon;
+    this.description = description;
+    this.temperature = temperature;
+    this.windSpeed = windSpeed;
+    this.humidity = humidity;
   }
-  getTemperature() {
-    return this.temperature;
+
+  getCity() {
+    return this.city;
   }
+
+  getDate() {
+    return this.date;
+  }
+
+  getIcon() {
+    return this.icon;
+  }
+
   getDescription() {
     return this.description;
   }
-  getIcon() {
-    return this.icon;
+
+  getTemperature() {
+    return this.temperature;
+  }
+
+  getWindSpeed() {
+    return this.windSpeed;
+  }
+
+  getHumidity() {
+    return this.humidity;
   }
 }
 
@@ -35,7 +63,7 @@ class WeatherService {
   apiKey: string;
   cityName: string;
   constructor() {
-    this.baseURL = 'http://api.openweathermap.org/data/2.5/weather';
+    this.baseURL = 'http://api.openweathermap.org/data/2.5/forecast';
     this.apiKey = process.env.API_KEY || '';
     this.cityName = '';
   }
@@ -82,7 +110,7 @@ class WeatherService {
   // TODO: Build parseCurrentWeather method
   parseCurrentWeather(response: any) {
     const { data } = response;
-    const currentWeather = new Weather(data[0].temp, data[0].weather.description, data[0].weather.icon);
+    const currentWeather = new Weather(data[0].city ?? '', data[0].date ?? '', data[0].weather?.icon ?? 'No icon', data[0].weather?.description ?? 'No description', data[0].temp ?? 0, data[0].wind_speed ?? 0, data[0].humidity ?? 0);
     return currentWeather;
   }
   // TODO: Complete buildForecastArray method
@@ -93,7 +121,7 @@ class WeatherService {
     }
     const { data } = response;
     const forecastArray = data.slice(1).map((day: any) => {
-      return new Weather(day.temp ?? 0, day.weather?.description ?? 'No description', day.weather?.icon ?? 'No icon');
+      return new Weather(day.city ?? '', day.date ?? '', day.weather?.icon ?? 'No icon', day.weather?.description ?? 'No description', day.temp ?? 0, day.wind_speed ?? 0, day.humidity ?? 0);
     });
     return forecastArray;
   }
