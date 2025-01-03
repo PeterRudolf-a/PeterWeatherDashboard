@@ -59,18 +59,20 @@ class Weather {
 // TODO: Complete the WeatherService class
 class WeatherService {
   // TODO: Define the baseURL, API key, and city name properties
-  baseURL: string;
-  apiKey: string;
+  baseURL?: string;
+  apiKey?: string;
   cityName: string;
   constructor() {
-    this.baseURL = 'http://api.openweathermap.org/data/2.5/forecast';
+    this.baseURL = process.env.BASE_URL || '';
     this.apiKey = process.env.API_KEY || '';
     this.cityName = '';
   }
   // TODO: Create fetchLocationData method
-  async fetchLocationData(query: string) {
+  private async fetchLocationData(query: string) {
     try {
-      const response = await fetch(query);
+      const response = await fetch(
+        `${this.baseURL}?q=${query}&appid=${this.apiKey}`
+      );
       const data = await response.json();
       return data;
     } catch (error) {
@@ -78,43 +80,42 @@ class WeatherService {
     }
   }
   // TODO: Create destructureLocationData method
-  destructureLocationData(locationData: Coordinates): Coordinates {
+  private destructureLocationData(locationData: any): Coordinates {
     const { lat, lon } = locationData;
     return { lat, lon };
   }
   // TODO: Create buildGeocodeQuery method
-  buildGeocodeQuery(): string {
-    const { baseURL, apiKey, cityName
-    } = this;
-    return `${baseURL}/geocode/v1/json?q=${cityName}&key=${apiKey}`;
+  private buildGeocodeQuery(): string {
+    const { cityName } = this;
+    return `${this.baseURL}?q=${cityName}&appid=${this.apiKey}`;
   }
   // TODO: Create buildWeatherQuery method
-  buildWeatherQuery(coordinates: Coordinates): string {
-    const { baseURL, apiKey } = this;
+  private buildWeatherQuery(coordinates: Coordinates): string {
+  //  const { baseURL, apiKey } = this;
     const { lat, lon } = coordinates;
-    return `${baseURL}?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+    return `${this.baseURL}data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${this.apiKey}`;
   }
   // TODO: Create fetchAndDestructureLocationData method
-  async fetchAndDestructureLocationData() {
+  private async fetchAndDestructureLocationData() {
     const query = this.buildGeocodeQuery();
     const locationData = await this.fetchLocationData(query);
     return this.destructureLocationData(locationData);
   }
   // TODO: Create fetchWeatherData method
-  async fetchWeatherData(coordinates: Coordinates) {
+  private async fetchWeatherData(coordinates: Coordinates) {
     const query = this.buildWeatherQuery(coordinates);
     const response = await fetch(query);
     const data = await response.json();
     return data;
   }
   // TODO: Build parseCurrentWeather method
-  parseCurrentWeather(response: any) {
+  private parseCurrentWeather(response: any) {
     const { data } = response;
     const currentWeather = new Weather(data[0].city ?? '', data[0].date ?? '', data[0].weather?.icon ?? 'No icon', data[0].weather?.description ?? 'No description', data[0].temp ?? 0, data[0].wind_speed ?? 0, data[0].humidity ?? 0);
     return currentWeather;
   }
   // TODO: Complete buildForecastArray method
-  buildForecastArray(response: any) {
+  private buildForecastArray(response: any) {
     if (!response || !response.data || !Array.isArray(response.data)) {
       console.error('Invalid response format');
       return [];
